@@ -145,12 +145,14 @@ extension KeyboardShortcuts.Shortcut {
 	*/
 	@MainActor
 	var takenByMainMenu: NSMenuItem? {
-		guard let mainMenu = NSApp.mainMenu else {
+        guard let mainMenu = NSApp.mainMenu, Self.checkingMainMenu else {
 			return nil
 		}
 
 		return menuItemWithMatchingShortcut(in: mainMenu)
 	}
+    
+    public static var checkingMainMenu: Bool = true
 }
 
 private let keyToCharacterMapping: [KeyboardShortcuts.Key: String] = [

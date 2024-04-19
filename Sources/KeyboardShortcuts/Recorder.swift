@@ -6,10 +6,11 @@ extension KeyboardShortcuts {
 		typealias NSViewType = RecorderCocoa
 
 		let name: Name
-		let onChange: ((_ shortcut: Shortcut?) -> Void)?
+        let onChange: ((_ shortcut: Shortcut?) -> Void)?
+		let onConflict: ((_ shortcut: Shortcut?, _ errorCode: Int) -> Void)?
 
 		func makeNSView(context: Context) -> NSViewType {
-			.init(for: name, onChange: onChange)
+			.init(for: name, onChange: onChange, onConflict: onConflict)
 		}
 
 		func updateNSView(_ nsView: NSViewType, context: Context) {
@@ -41,18 +42,21 @@ extension KeyboardShortcuts {
 	*/
 	public struct Recorder<Label: View>: View { // swiftlint:disable:this type_name
 		private let name: Name
-		private let onChange: ((Shortcut?) -> Void)?
+        private let onChange: ((Shortcut?) -> Void)?
+		private let onConflict: ((_ shortcut: Shortcut?, _ errorCode: Int) -> Void)?
 		private let hasLabel: Bool
 		private let label: Label
 
-		init(
+		public init(
 			for name: Name,
-			onChange: ((Shortcut?) -> Void)? = nil,
+            onChange: ((Shortcut?) -> Void)? = nil,
+            onConflict: ((_ shortcut: Shortcut?, _ errorCode: Int) -> Void)? = nil,
 			hasLabel: Bool,
 			@ViewBuilder label: () -> Label
 		) {
 			self.name = name
 			self.onChange = onChange
+            self.onConflict = onConflict
 			self.hasLabel = hasLabel
 			self.label = label()
 		}
@@ -63,7 +67,8 @@ extension KeyboardShortcuts {
 					LabeledContent {
 						_Recorder(
 							name: name,
-							onChange: onChange
+							onChange: onChange,
+                            onConflict: onConflict
 						)
 					} label: {
 						label
@@ -71,7 +76,8 @@ extension KeyboardShortcuts {
 				} else {
 					_Recorder(
 						name: name,
-						onChange: onChange
+						onChange: onChange,
+                        onConflict: onConflict
 					)
 						.formLabel {
 							label
@@ -80,7 +86,8 @@ extension KeyboardShortcuts {
 			} else {
 				_Recorder(
 					name: name,
-					onChange: onChange
+                    onChange: onChange,
+                    onConflict: onConflict
 				)
 			}
 		}
@@ -113,11 +120,13 @@ extension KeyboardShortcuts.Recorder<Text> {
 	public init(
 		_ title: LocalizedStringKey,
 		name: KeyboardShortcuts.Name,
-		onChange: ((KeyboardShortcuts.Shortcut?) -> Void)? = nil
+        onChange: ((KeyboardShortcuts.Shortcut?) -> Void)? = nil,
+		onConflict: ((KeyboardShortcuts.Shortcut?, Int) -> Void)? = nil
 	) {
 		self.init(
 			for: name,
 			onChange: onChange,
+            onConflict: onConflict,
 			hasLabel: true
 		) {
 			Text(title)

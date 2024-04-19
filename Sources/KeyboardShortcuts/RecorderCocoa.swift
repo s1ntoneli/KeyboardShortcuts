@@ -29,6 +29,7 @@ extension KeyboardShortcuts {
 	public final class RecorderCocoa: NSSearchField, NSSearchFieldDelegate {
 		private let minimumWidth = 130.0
 		private let onChange: ((_ shortcut: Shortcut?) -> Void)?
+        private let onConflict: ((_ shortcut: Shortcut?, _ errorCode: Int) -> Void)?
 		private var canBecomeKey = false
 		private var eventMonitor: LocalEventMonitor?
 		private var shortcutsNameChangeObserver: NSObjectProtocol?
@@ -83,10 +84,12 @@ extension KeyboardShortcuts {
 		*/
 		public required init(
 			for name: Name,
-			onChange: ((_ shortcut: Shortcut?) -> Void)? = nil
+            onChange: ((_ shortcut: Shortcut?) -> Void)? = nil,
+            onConflict: ((_ shortcut: Shortcut?, _ errorCode: Int) -> Void)?
 		) {
 			self.shortcutName = name
-			self.onChange = onChange
+            self.onChange = onChange
+			self.onConflict = onConflict
 
 			super.init(frame: .zero)
 			self.delegate = self
@@ -274,10 +277,11 @@ extension KeyboardShortcuts {
 					// TODO: Find a better way to make it possible to dismiss the alert by pressing "Enter". How can we make the input automatically temporarily lose focus while the alert is open?
 					self.blur()
 
-					NSAlert.showModal(
-						for: self.window,
-						title: String.localizedStringWithFormat("keyboard_shortcut_used_by_menu_item".localized, menuItem.title)
-					)
+                    onConflict?(shortcut, 0)
+//					NSAlert.showModal(
+//						for: self.window,
+//						title: String.localizedStringWithFormat("keyboard_shortcut_used_by_menu_item".localized, menuItem.title)
+//					)
 
 					self.focus()
 
@@ -287,23 +291,24 @@ extension KeyboardShortcuts {
 				if shortcut.isTakenBySystem {
 					self.blur()
 
-					let modalResponse = NSAlert.showModal(
-						for: self.window,
-						title: "keyboard_shortcut_used_by_system".localized,
-						// TODO: Add button to offer to open the relevant system settings pane for the user.
-						message: "keyboard_shortcuts_can_be_changed".localized,
-						buttonTitles: [
-							"ok".localized,
-							"force_use_shortcut".localized
-						]
-					)
+//					let modalResponse = NSAlert.showModal(
+//						for: self.window,
+//						title: "keyboard_shortcut_used_by_system".localized,
+//						// TODO: Add button to offer to open the relevant system settings pane for the user.
+//						message: "keyboard_shortcuts_can_be_changed".localized,
+//						buttonTitles: [
+//							"ok".localized,
+//							"force_use_shortcut".localized
+//						]
+//					)
+                    onConflict?(shortcut, 1)
 
 					self.focus()
 
 					// If the user has selected "Use Anyway" in the dialog (the second option), we'll continue setting the keyboard shorcut even though it's reserved by the system.
-					guard modalResponse == .alertSecondButtonReturn else {
-						return nil
-					}
+//					guard modalResponse == .alertSecondButtonReturn else {
+//						return nil
+//					}
 				}
 
 				self.stringValue = "\(shortcut)"
